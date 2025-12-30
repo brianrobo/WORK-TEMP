@@ -1,4 +1,197 @@
 
+아래는 리포트(보고서/회의자료)에 바로 사용할 수 있는 수준으로 정리한
+onNetworkSecurityEvents API 종합 요약본입니다.
+(앞서 정리한 AlertCategory, NetworkSecurityEvent 문맥을 모두 반영)
+
+
+---
+
+onNetworkSecurityEvents API 종합 요약
+
+1. 목적 (Purpose)
+
+onNetworkSecurityEvents는 모뎀이 셀룰러 네트워크 보안 위협을 감지했을 때,
+그 결과를 실시간으로 프레임워크에 통지하기 위한 indication 기반 API이다.
+
+이 API는 네트워크 보안 위협을
+
+사후 분석(log) 용도가 아닌
+
+즉각적인 인지 및 대응이 가능한 이벤트 형태로 전달하는 것을 목표로 한다.
+
+
+
+---
+
+2. API 정의 (원문 유지)
+
+void onNetworkSecurityEvnets(
+    in RadioIndicationType type,
+    in NetworkSecurityEvent[] events
+);
+
+
+---
+
+3. 호출 주체 및 시점
+
+호출 주체: Modem implementation
+
+호출 시점:
+
+네트워크 보안 위협이 감지(detected) 되었고
+
+해당 위협에 대한 내부 처리 또는 완화 판단(processed) 이 완료된 직후
+
+
+원칙:
+
+가능한 한 지연 없이(as soon as possible) 호출
+
+하나의 호출에 여러 개의 보안 이벤트 전달 가능
+
+
+
+
+---
+
+4. 전달되는 정보 범위
+
+onNetworkSecurityEvents는 단순 “위협 발생” 알림이 아니라,
+아래 정보를 구조화된 형태로 전달한다.
+
+(1) 위협 유형
+
+AlertCategory
+
+RAT downgrade, fake/rogue cell, jamming, DoS, 위치 추적 시도 등
+
+
+(2) 위협 상태
+
+AlertStatus
+
+단순 감지 상태인지, 모뎀 차원의 완화(mitigation) 가 수행되었는지 여부
+
+
+(3) 발생 사유
+
+ReasonCode[]
+
+보안 이벤트 발생의 구체적인 원인 또는 조건
+
+
+(4) 네트워크 맥락 정보
+
+cellId, physicalCellId, arfcn
+
+plmn, rat
+
+이벤트가 발생한 정확한 네트워크 환경 제공
+
+
+(5) 긴급 통신 여부
+
+isEmergency
+
+Emergency call 등 특수 상황 여부 판단 가능
+
+
+
+---
+
+5. NetworkSecurityEvent의 역할
+
+NetworkSecurityEvent는 실제 발생한 단일 보안 위협 인스턴스를 의미한다.
+
+> AlertCategory → “무슨 종류의 위협인가”
+
+NetworkSecurityEvent → “그 위협이 실제로 언제/어디서/어떤 상태로 발생했는가”
+
+
+
+
+이를 통해 프레임워크는
+정적 capability 정보가 아닌, 동적 보안 이벤트 정보를 획득할 수 있다.
+
+
+---
+
+6. 기존 API와의 관계
+
+구분	역할
+
+getSupportedNetworkAlertCategories()	모뎀이 지원 가능한 보안 위협 유형을 사전에 선언
+AlertCategory	네트워크 보안 위협의 표준 분류 체계
+NetworkSecurityEvent	단일 보안 위협 발생에 대한 구체적 이벤트 데이터
+onNetworkSecurityEvents()	감지된 보안 위협을 실시간으로 통지
+
+
+→ Capability 확인 + 실시간 이벤트 통지 구조로 역할 분리
+
+
+---
+
+7. 기대 효과 (Reporting Point)
+
+RAT downgrade, fake cell, jamming 등
+실시간 대응이 필요한 보안 위협을 프레임워크 레벨에서 즉시 인지
+
+모뎀 보안 감지 능력을 표준화된 API로 노출
+
+향후
+
+사용자 알림
+
+보안 로깅
+
+정책 기반 대응 와 연계 가능한 확장성 있는 보안 이벤트 체계 제공
+
+
+
+
+---
+
+8. 한 줄 요약 (Executive Summary)
+
+> onNetworkSecurityEvents는 모뎀이 감지한 셀룰러 네트워크 보안 위협을 상세 맥락 정보와 함께 실시간으로 프레임워크에 전달하는 핵심 보안 indication API이다.
+
+
+
+
+---
+
+9. 보고 시 권장 메시지
+
+본 API는 2026년 신규 네트워크 보안 API 체계의 핵심 구성 요소
+
+단순 로그가 아닌 행위 기반(Event-driven) 보안 인지 메커니즘
+
+모뎀–프레임워크 간 책임 분리 및 역할 명확화
+
+Modem: 감지·분석
+
+Framework: 판단·정책 적용
+
+
+
+
+---
+
+필요하시면 이 요약을 기반으로:
+
+1~2장 분량의 임원 보고용 슬라이드 문안
+
+표 중심의 Spec Review 자료
+
+Vendor 협업용 구현 가이드 요약본
+
+
+까지 바로 만들어 드릴 수 있습니다.
+
+
+
+
 아래는 보고/설계 문서에 바로 사용할 수 있도록 정리한 종합 설명입니다.
 설명은 한국어, 구조체/필드명/타입/enum 참조는 원문 그대로 유지했습니다.
 

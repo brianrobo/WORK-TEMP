@@ -1,4 +1,210 @@
 
+아래는 보고/설계 문서에 바로 사용할 수 있도록 정리한 종합 설명입니다.
+설명은 한국어, 구조체/필드명/타입/enum 참조는 원문 그대로 유지했습니다.
+
+
+---
+
+NetworkSecurityEvent 구조체 정리
+
+개요
+
+NetworkSecurityEvent는 모뎀이 감지한 단일 네트워크 보안 이벤트를 표현하는 데이터 구조이다.
+onNetworkSecurityEvents() indication을 통해 프레임워크로 전달되며, 어떤 보안 위협이 발생했는지,
+현재 상태(감지만 되었는지, 완화 조치가 있었는지), 그리고 발생한 네트워크 환경 정보를 함께 제공한다.
+
+이 구조체는 실제 발생한 보안 위협 인스턴스 단위의 정보 전달을 목적으로 한다.
+
+
+---
+
+접근 범위 및 안정성
+
+@hide
+@VintfStability
+@JavaDerive(toString=true)
+@RustDerive(Clone=true, Eq=true, PartialEq=true)
+
+@hide
+→ 플랫폼 내부용 구조체 (SDK 비공개)
+
+@VintfStability
+→ Vendor Interface 안정성 보장
+
+@JavaDerive(toString=true)
+→ Java 레벨 디버깅 및 로그 출력 용이
+
+@RustDerive(...)
+→ Rust 바인딩에서의 복제/비교 지원
+
+
+
+---
+
+필드별 상세 설명
+
+AlertCategory alertcategory = AlertCategory.UNSPECIFIED;
+
+감지된 보안 위협의 일반적인 분류(category)
+
+AlertCategory enum을 사용하여 위협 유형을 표준화
+
+예: downgrade, fake cell, jamming 등
+
+
+
+---
+
+AlertStatus alertStatus = AlertStatus.UNSPECIFIED;
+
+보안 위협의 현재 상태
+
+단순 감지(detected) 상태인지,
+또는 모뎀에서 완화(mitigation) 조치가 수행되었는지를 나타냄
+
+
+
+---
+
+ReasonCode[] reasonCodes;
+
+해당 보안 알림이 발생한 구체적인 사유(Reason) 코드 목록
+
+세부 맥락을 제공하기 위한 보조 정보
+
+특정 사유가 없는 경우 빈 배열(empty) 가능
+
+
+
+---
+
+long cellId;
+
+이벤트가 발생한 셀의 Cell Identity (CI)
+
+문제 발생 지점을 논리적으로 식별하는 데 사용
+
+
+
+---
+
+int physicalCellId;
+
+이벤트 발생 셀의 Physical Cell ID (PCI)
+
+무선 계층 수준에서의 셀 식별 정보
+
+
+
+---
+
+int arfcn;
+
+셀의 Absolute Radio Frequency Channel Number (ARFCN)
+
+사용 중인 주파수 자원 식별 목적
+
+
+
+---
+
+String plmn;
+
+해당 셀의 PLMN (Public Land Mobile Network) ID
+
+네트워크 사업자 식별 정보 (예: MCC/MNC)
+
+
+
+---
+
+RadioTechnology rat = RadioTechnology.UNKNOWN;
+
+이벤트 발생 시 사용 중이던 Radio Access Technology
+
+예: 2G / 3G / 4G / 5G 등
+
+RAT downgrade 관련 이벤트 분석에 핵심 정보
+
+
+
+---
+
+boolean isEmergency;
+
+이벤트 발생 시 단말이 긴급 통신 상태(emergency session) 였는지 여부
+
+긴급 통화 중 발생한 보안 이벤트는
+
+정책적으로 다른 처리(우선순위/알림 방식)를 적용할 수 있음
+
+
+
+
+---
+
+구조체 역할 요약
+
+> NetworkSecurityEvent는
+**“언제, 어디서, 어떤 네트워크 환경에서, 어떤 보안 위협이 발생했고, 현재 상태가 무엇인지”**를
+하나의 이벤트 단위로 전달하는 핵심 데이터 구조이다.
+
+
+
+
+---
+
+API 연계 흐름 요약 (보고용)
+
+1. 모뎀은 자신이 지원 가능한 위협 유형을
+getSupportedNetworkAlertCategories()로 사전 선언
+
+
+2. 실제 보안 위협 발생 시
+
+위협 유형 → AlertCategory
+
+상태 → AlertStatus
+
+세부 원인 → ReasonCode[]
+
+네트워크 맥락 → cellId, plmn, rat, arfcn 등
+
+
+
+3. 위 정보를 NetworkSecurityEvent로 구성하여 onNetworkSecurityEvents()를 통해 프레임워크에 즉시 전달
+
+
+
+
+---
+
+한 줄 요약 (보고 자료용)
+
+> NetworkSecurityEvent는 모뎀이 감지한 네트워크 보안 위협을 단일 이벤트 단위로 표현하며, 위협 유형, 상태, 원인, 네트워크 맥락 정보를 함께 전달하는 구조체이다.
+
+
+
+
+---
+
+다음 단계로 매우 자연스럽게 이어질 수 있는 항목은 다음입니다.
+
+AlertStatus enum 정의 및 상태 전이 설명
+
+ReasonCode enum 전체 정리
+
+downgrade / fake cell / jamming 시나리오별 NetworkSecurityEvent 예시
+
+framework 정책 처리 흐름 다이어그램
+
+
+어디까지 이어서 정리할지 말씀 주시면, 보고서 형태로 계속 완성해 드리겠습니다.
+
+
+
+
+
 아래 내용은 보고/공유 문서에 그대로 넣을 수 있는 형태로, AlertCategory 전체 항목을 원문 enum 명칭/주석을 유지하여 나열하고, 각 항목의 의미를 한국어로 종합 정리한 것입니다. (현재 대화에서 제공된 항목 기준)
 
 
